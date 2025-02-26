@@ -37,8 +37,7 @@ char *get_next_line(int fd)
     static char cache[CACHE_SIZE];
     static int start = 0, end = 0;
     char *line;
-    int i, bytes;
-
+    int  i,j,bytes;
     // Leggi i dati nel buffer cache
     while ((bytes = read(fd, cache + end, BUFFER_SIZE)) > 0)
     {
@@ -55,8 +54,7 @@ char *get_next_line(int fd)
     if (!line)
         return NULL;
     // Copia la riga nel buffer allocato
-    int j;
-    for (j = 0; start < i; j++)
+    for ( j = 0; start < i; j++)
         line[j] = cache[start++];    
     // Aggiungi il newline (se presente) e il terminatore nullo
     if (i < end && cache[i] == '\n')
@@ -65,6 +63,45 @@ char *get_next_line(int fd)
     return line;
 }
 
+#include <stdlib.h>
+#include <unistd.h>
+
+#define BUFFER_SIZE 1024
+#define CACHE_SIZE 100000
+#define LINE_SIZE 1024 // Dimensione massima della riga
+
+char *get_next_line(int fd)
+{
+    static char cache[CACHE_SIZE];
+    static int start = 0, end = 0;
+    static char line[LINE_SIZE]; // Buffer statico per la riga
+    int i, j, bytes;
+
+    // Leggi i dati nel buffer cache
+    while ((bytes = read(fd, cache + end, BUFFER_SIZE)) > 0)
+    {
+        end += bytes;
+        if (end >= CACHE_SIZE) // Evita overflow
+            break;
+    }
+
+    if (bytes < 0 || (start == end && !bytes))
+        return NULL;
+
+    // Trova la fine della riga (newline o fine del buffer)
+    for (i = start; i < end && cache[i] != '\n'; i++);
+
+    // Copia la riga nel buffer statico
+    for (j = 0; start < i && j < LINE_SIZE - 1; j++)
+        line[j] = cache[start++];
+
+    // Aggiungi il newline (se presente) e il terminatore nullo
+    if (i < end && cache[i] == '\n' && j < LINE_SIZE - 1)
+        line[j++] = cache[start++];
+    line[j] = '\0';
+
+    return line;
+}
 # include <stdio.h>
 int main()
 {
