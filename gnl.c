@@ -1,49 +1,31 @@
-char *get_line(char *str, int start, int end)
-{
-    char *res = malloc((end - start  + 1) * sizeof(char));
-    if (!res)
-        return (0);
-    for (int i = 0; i < end - start; ++i)
-        res[i] = str[start + i];
-    res[end - start] = '\0';
-    return (res);
-}
+#include <unistd.h>
+#include <stdlib.h>
 
 char *get_next_line(int fd)
 {
-    char buff[BUFFER_SIZE];
-    static char cache[100000];
-    static int start = 0;
-    static int end = 0;
-    while(1)
-    {
-        int bytes = read(fd, buff, BUFFER_SIZE);
-        if (bytes > 0)
-        {
-            for (int i = 0; i < bytes; ++i)
-                cache[end++] = buff[i];
-            continue;
-        }
-        else if (bytes < 0)
-            return (0);
+    static char c[100000];
+    static int i, r, n;
+    char *s;
+    int j = 0;
+    
+    if (i >= r)
+        i = 0, r = 0;
+    while (!n && (r == 0 || c[i + j - 1] != '\n'))
+        if ((n = j >= r - i) && (r += read(fd, c + r, BUFFER_SIZE)) <= i)
+            return (i < r) ? get_next_line(fd) : NULL;
         else
-            break;
-    }
-    if (start == end)
-        return (0);
-    for (int i = start; i < end; ++i)
-    {
-        if (cache[i] == '\n')
-        {
-            char *line = get_line(cache, start, i + 1);
-            start = i + 1;
-            return (line);
-        }
-    }
-
-    char *line = get_line(cache, start, end);
-    start = end;
-    return (line);
+            j++;
+    s = malloc(j + 1);
+    if (!s)
+        return NULL;
+    j = 0;
+    while (i < r && c[i] != '\n')
+        s[j++] = c[i++];
+    if (i < r && c[i] == '\n')
+        s[j++] = c[i++];
+    s[j] = 0;
+    n = 0;
+    return s;
 }
 
 # include <stdio.h>
