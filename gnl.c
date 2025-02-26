@@ -102,6 +102,60 @@ char *get_next_line(int fd)
 
     return line;
 }
+char *get_next_line(int fd)
+{
+    static char cache[100000];
+    static char result[10000];
+    static int start = 0, end = 0;
+    int i, j, bytes;
+    
+    // Leggi solo se necessario
+    if (start >= end) {
+        start = 0;
+        end = 0;
+        if ((bytes = read(fd, cache, 10000)) <= 0)
+            return NULL;
+        end = bytes;
+    }
+    
+    // Trova la fine della riga
+    for (i = start; i < end && cache[i] != '\n'; i++);
+    
+    // Copia la riga nel buffer di risultato statico
+    for (j = 0; start < i; j++)
+        result[j] = cache[start++];
+    
+    // Gestisci il newline se presente
+    if (i < end && cache[i] == '\n') {
+        result[j++] = '\n';
+        start++;
+    }
+    
+    // Aggiungi il terminatore di stringa
+    result[j] = '\0';
+    
+    // Se abbiamo raggiunto la fine del buffer ma non c'è un newline,
+    // potremmo dover leggere ancora al prossimo chiamata
+    return result[0] ? result : NULL;
+}
+
+char *get_next_line(int fd)
+{
+    static char cache[100000], result[10000];
+    static int start = 0, end = 0;
+    int i, j, bytes;
+    if (start >= end) 
+    {
+        start = 0; end = 0;
+        if ((bytes = read(fd, cache, 10000)) <= 0) return NULL;
+        end = bytes;
+    }
+    for (i = start; i < end && cache[i] != '\n'; i++);
+    for (j = 0; start < i; j++) result[j] = cache[start++];
+    if (i < end && cache[i] == '\n') { result[j++] = '\n'; start++; }
+    result[j] = '\0';
+    return result[0] ? result : NULL;
+}
 # include <stdio.h>
 int main()
 {
