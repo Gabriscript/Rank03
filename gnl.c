@@ -28,6 +28,43 @@ char *get_next_line(int fd)
     return s;
 }
 
+
+#define BUFFER_SIZE 1024
+#define CACHE_SIZE 100000
+
+char *get_next_line(int fd)
+{
+    static char cache[CACHE_SIZE];
+    static int start = 0, end = 0;
+    char *line;
+    int i, bytes;
+
+    // Leggi i dati nel buffer cache
+    while ((bytes = read(fd, cache + end, BUFFER_SIZE)) > 0)
+    {
+        end += bytes;
+        if (end >= CACHE_SIZE) // Evita overflow
+            break;
+    }
+    if (bytes < 0 || (start == end && !bytes))
+        return NULL;
+    // Trova la fine della riga (newline o fine del buffer)
+    for (i = start; i < end && cache[i] != '\n'; i++);
+    // Alloca memoria per la riga (includendo newline e terminatore nullo)
+    line = malloc(i - start + 2); // +2 per newline e terminatore nullo
+    if (!line)
+        return NULL;
+    // Copia la riga nel buffer allocato
+    int j;
+    for (j = 0; start < i; j++)
+        line[j] = cache[start++];    
+    // Aggiungi il newline (se presente) e il terminatore nullo
+    if (i < end && cache[i] == '\n')
+        line[j++] = cache[start++];
+    line[j] = '\0';
+    return line;
+}
+
 # include <stdio.h>
 int main()
 {
