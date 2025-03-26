@@ -43,7 +43,7 @@ int ft_printf(const char *s, ...)
         if (s[i] == 'd')
             count += (long)putn(va_arg(va,int),10);
         else if (s[i] == 'x')
-            count += putn(va_arg(va,unsigned int),16);
+            count += (long)putn(va_arg(va,unsigned int),16);
         else if (s[i] == 's')
             count += put_s(va_arg(va,char *));
     }
